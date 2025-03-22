@@ -25,13 +25,26 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         
+    - name: Install Git
+      run: |
+        choco install git -y
+        
+    - name: Update PATH for Git
+      run: |
+        echo "C:\Program Files\Git\cmd" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+        
     - name: Build executable
-      run: python setup.py build
+      run: |
+        python setup.py build_exe
+      
+    - name: List build directory contents
+      run: |
+        dir build /s
       
     - name: Create ZIP archive
       run: |
-        cd build
-        Compress-Archive -Path cx_Freeze/* -DestinationPath ../DawGit-windows.zip
+        $buildFolder = (Get-ChildItem -Path build -Directory | Where-Object { $_.Name -like "exe.*" }).FullName
+        Compress-Archive -Path "$buildFolder\*" -DestinationPath DawGit-windows.zip
         
     - name: Upload artifact
       uses: actions/upload-artifact@v4
