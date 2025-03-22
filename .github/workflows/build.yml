@@ -39,12 +39,23 @@ jobs:
       
     - name: List build directory contents
       run: |
-        dir build /s
+        if (Test-Path -Path "build") {
+          Get-ChildItem -Path build -Recurse
+        } else {
+          Write-Host "Build directory not found"
+        }
       
     - name: Create ZIP archive
       run: |
-        $buildFolder = (Get-ChildItem -Path build -Directory | Where-Object { $_.Name -like "exe.*" }).FullName
-        Compress-Archive -Path "$buildFolder\*" -DestinationPath DawGit-windows.zip
+        $buildFolders = Get-ChildItem -Path build -Directory | Where-Object { $_.Name -like "exe.*" }
+        if ($buildFolders) {
+          $buildFolder = $buildFolders[0].FullName
+          Write-Host "Found build folder: $buildFolder"
+          Compress-Archive -Path "$buildFolder\*" -DestinationPath DawGit-windows.zip -Force
+        } else {
+          Write-Host "No build folder found"
+          exit 1
+        }
         
     - name: Upload artifact
       uses: actions/upload-artifact@v4
